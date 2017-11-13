@@ -1,0 +1,6 @@
+FROM nginx:alpine
+MAINTAINER alec reiter <alecreiter@gmail.com>
+RUN rm /etc/nginx/conf.d/*
+COPY nginx/nginx.conf /etc/nginx/nginx.conf
+COPY nginx/flaskbb.local /etc/nginx/conf.d/flaskbb.conf
+COPY flaskbb/flaskbb/static /var/www/flaskbb/static

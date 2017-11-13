@@ -1,0 +1,14 @@
+server {
+    listen 80 default_server;
+
+    location /static/ {
+        sendfile on;
+        root /var/www/flaskbb;
+    }
+
+    location / {
+        proxy_pass http://flaskbb-app:8080;
+        proxy_set_header    Host $host;
+        proxy_pass_request_headers  on;
+    }
+}

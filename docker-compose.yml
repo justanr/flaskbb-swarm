@@ -1,0 +1,121 @@
+version: '3.3'
+services:
+  flaskbb-app:
+    image: flaskbb/app
+    command: ['uwsgi']
+    deploy:
+      placement:
+        constraints:
+          - node.role != manager
+      replicas: 3
+      mode: replicated
+      resources:
+        limits:
+          cpus: '0.50'
+        reservations:
+          cpus: '0.25'
+      restart_policy:
+        condition: on-failure
+        delay: 2s
+        max_attempts: 3
+        window: 30s
+    configs:
+      - source: flaskbb-app
+        target: /var/run/flaskbb/flaskbb.cfg
+      - source: flaskbb-uwsgi
+        target: /var/run/flaskbb/uwsgi.ini
+    secrets:
+      - flaskbb_postgres_connection
+      - flaskbb_secret_key
+      - flaskbb_wtf_csrf_secret
+      - redis_url
+    networks:
+      - flaskbb
+      - redis-net
+
+
+  flaskbb-celery:
+    image: flaskbb/app
+    command: ['celery']
+    configs:
+      - source: flaskbb-app
+        target: /var/run/flaskbb/flaskbb.cfg
+    secrets:
+      - flaskbb_postgres_connection
+      - flaskbb_secret_key
+      - flaskbb_wtf_csrf_secret
+      - redis_url
+    deploy:
+      placement:
+        constraints:
+          - node.role != manager
+      replicas: 1
+      mode: replicated
+      resources:
+        limits:
+          cpus: '0.50'
+        reservations:
+          cpus: '0.25'
+      restart_policy:
+        condition: on-failure
+        delay: 2s
+        max_attempts: 3
+        window: 30s
+    networks:
+      - flaskbb
+      - redis-net
+
+  flaskbb-nginx:
+    image: flaskbb/nginx
+    configs:
+      - source: flaskbb-nginx
+        target: /etc/nginx/conf.d/flaskbb.conf
+    deploy:
+      labels:
+        - "traefik.docker.network=traefik-net"
+        - "traefik.port=80"
+        - "traefik.frontend.rule=Host:bb.lab.home.firelink.in"
+      replicas: 1
+      mode: replicated
+      resources:
+        limits:
+          cpus: '0.50'
+        reservations:
+          cpus: '0.25'
+      restart_policy:
+        condition: on-failure
+        delay: 2s
+        max_attempts: 3
+        window: 30s
+    networks:
+      - traefik-net
+      - flaskbb
+
+secrets:
+  flaskbb_postgres_connection:
+    external: true
+  flaskbb_secret_key:
+    external: true
+  flaskbb_wtf_csrf_secret:
+    external: true
+  redis_url:
+    external: true
+
+configs:
+  flaskbb-nginx:
+    external: true
+  flaskbb-app:
+    external: true
+  flaskbb-uwsgi:
+    external: true
+
+networks:
+  redis-net:
+    external:
+      name: redis-net
+  traefik-net:
+    external:
+      name: traefik-net
+  flaskbb:
+    external:
+      name: flaskbb
