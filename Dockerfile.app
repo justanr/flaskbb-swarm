@@ -19,13 +19,15 @@ RUN pip wheel -r requirements.txt
 FROM python:3.6-slim as APP
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
-RUN useradd -r flaskbb
 MAINTAINER alec reiter <alecreiter@gmail>
+RUN groupadd -g 1009 flaskbb && useradd -r -u 1009 -g 1009 flaskbb
 COPY --from=REQS /wheelhouse /wheelhouse
 WORKDIR /var/run/flaskbb
 COPY ./flaskbb .
-RUN chown -R flaskbb:flaskbb /var/run/flaskbb
-RUN pip install --no-index -f /wheelhouse -r requirements.txt
+RUN touch /var/run/flaskbb/logs/info.log && \
+    touch /var/run/flaskbb/logs/error.log && \
+    chown -R flaskbb:flaskbb /var/run/flaskbb && \
+    pip install --no-index -f /wheelhouse -r requirements.txt
 WORKDIR /var/run/flaskbb-scripts
 COPY ./scripts .
 RUN pip install --no-index -f /wheelhouse -r requirements.txt && \
