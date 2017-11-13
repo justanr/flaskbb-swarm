@@ -26,6 +26,7 @@ WORKDIR /var/run/flaskbb
 COPY ./flaskbb .
 RUN touch /var/run/flaskbb/logs/info.log && \
     touch /var/run/flaskbb/logs/error.log && \
+    mkdir -p /var/run/flaskbb/whoosh_index/36 && \
     chown -R flaskbb:flaskbb /var/run/flaskbb && \
     pip install --no-index -f /wheelhouse -r requirements.txt
 WORKDIR /var/run/flaskbb-scripts
