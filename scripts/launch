@@ -1,0 +1,26 @@
+#!/bin/bash
+set -e
+
+case $1 in
+    uwsgi)
+        shift;
+        exec uwsgi --ini /var/run/flaskbb/uwsgi.ini $@
+        ;;
+    flaskbb)
+        shift;
+        exec flaskbb --config /var/run/flaskbb/flaskbb.cfg $@
+        ;;
+    db-upgrade)
+        exec flaskbb --config /var/run/flaskbb/flaskbb.cfg db upgrade
+        ;;
+    python)
+        exec flaskbb --config /var/run/flaskbb/flaskbb.cfg shell
+        ;;
+    celery)
+        shift;
+        exec flaskbb --config /var/run/flaskbb/flaskbb.cfg celery worker --uid flaskbb
+        ;;
+    *)
+        exec $@;
+        ;;
+esac
